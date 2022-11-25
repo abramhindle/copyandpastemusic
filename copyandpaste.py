@@ -1,8 +1,12 @@
 import subprocess
 import pyperclip
 import time
-from collections import Counter
+from collections import Counter, defaultdict
 import liblo
+import json
+import random
+import itertools
+import argparse
 
 copy, paste = pyperclip.determine_clipboard()
 
@@ -78,16 +82,74 @@ class OscSetter:
     def send(self,path,*args):
         liblo.send(self.target, path, *args)
 
-osc = OscSetter()
+alphabet = "abcdefghijklmnopqrstuvwxyz0123456789 "
+class CharMapper:
+    def __init__(self,clusterfile="reduce.json",alphabet=alphabet,n=3):
+        self.alphabet = alphabet
+        self.cluster_data = json.load(open(clusterfile))
+        self.reverse = defaultdict(list)
+        for elm in self.cluster_data["data"]:
+            self.reverse[elm.get("cluster",0)].append(elm)
+        self.clusters = list(self.reverse.keys())
+        self.mapping = defaultdict(lambda: 0)
+        self.n = n
+        self.alphabetset = set(self.alphabet)
+    def choose_from_cluster(self, cluster):
+        if not cluster in self.reverse:
+            return None
+        return random.choice(self.reverse[cluster])
+    def choose_cluster(self):
+        return random.choice(self.clusters)
+    def randomize_mapping(self):
+        for mapping in itertools.product(self.alphabet,repeat=self.n):
+            key = "".join(mapping)
+            self.mapping[key] = self.choose_cluster()
+    def linear_mapping(self):
+        i = 0
+        for mapping in itertools.product(self.alphabet,repeat=self.n):
+            key = "".join(mapping)
+            v = self.clusters[i % len(self.clusters)]
+            # print(f'[{key}] {v}')
+            self.mapping[key] = v
+            i += 1
+    def choose_from_mapping(self,text):
+        n = self.n
+        key = [c for c in text.lower() if c in self.alphabetset][-n:]
+        key = "".join(key)
+        if key in self.mapping:
+            return self.choose_from_cluster(self.mapping[key])
+        return None        
 
-for text in pastes(primary=True):
-    print(text)
-    espeakit(text)
-    osc.send( "/text",  text )
-    score = lm.entropy(text)
-    osc.send( "/entropy", score)
-    print(f'Score: {score}')
-    lm.add_text(text)
-    c = Counter( text )
-    alphabet = [c.get(i,0) for i in "abcdefghijklmnopqrstuvwxyz "]
-    osc.send( "/alphabet", *alphabet )
+def char_mapper_test():
+    cm = CharMapper()
+    cm.linear_mapping()
+    print(cm.choose_from_mapping("aaa"))
+
+def parse_args():
+    parser = argparse.ArgumentParser(description=f'CopyAndPaste')
+    parser.add_argument('--test', action="store_true", help='Run Tests')
+    return parser.parse_args()
+
+def run_tests():
+    char_mapper_test()
+
+def main():
+    args = parse_args()
+    if args.test:
+        run_tests()
+        return
+    osc = OscSetter()
+    for text in pastes(primary=True):
+        print(text)
+        espeakit(text)
+        osc.send( "/text",  text )
+        score = lm.entropy(text)
+        osc.send( "/entropy", score)
+        print(f'Score: {score}')
+        lm.add_text(text)
+        c = Counter( text )
+        alphabet = [c.get(i,0) for i in "abcdefghijklmnopqrstuvwxyz "]
+        osc.send( "/alphabet", *alphabet )
+
+if __name__ == "__main__":
+    main()
