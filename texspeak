@@ -1,0 +1,74 @@
+#!/usr/bin/perl
+use POSIX qw(setsid);
+
+`killall espeak 2> /dev/null `;
+`killall ecasound 2> /dev/null `;
+my @in = <STDIN>;
+my @voices = qw(
+gmw/en
+mb/mb-en1
+gmw/en-US
+gmw/en-GB-scotland
+gmw/en-GB-x-gbclan
+gmw/en-GB-x-rp
+mb/mb-us2
+mb/mb-us1
+mb/mb-us3
+gmw/en-GB-x-gbcwmd
+mb/mb-de1-en
+mb/mb-de2-en
+mb/mb-de3-en
+mb/mb-de4-en
+mb/mb-de5-en
+mb/mb-de6-en
+mb/mb-gr2-en
+mb/mb-ro1-en
+gmw/en-029
+mb/mb-nl2-en
+mb/mb-fr4-en
+mb/mb-fr1-en
+mb/mb-hu1-en
+mb/mb-sw2-en
+mb/mb-af1-en
+mb/mb-pl1-en
+mb/mb-sw1-en
+Storm
+);
+my $espeakvoice = $voices[rand(@voices)];
+# print "$espeakvoice$/" ;
+daemonize();
+$|=1;
+my $pitch = 10 + int(rand() * 90);
+use File::Temp qw/ tempfile /;
+my ($fh, $wavfile) = tempfile( '/tmp/espeakXXXX', SUFFIX=>".wav", UNLINK=>0);
+open(WF,">", "/tmp/wav.txt");
+print WF $wavfile;
+close(WF);
+#my $wavfile = "/tmp/espeak.wav";
+
+open(FD,"| espeak -s 270 -a 25 -p $pitch -v '$espeakvoice' -w $wavfile");
+
+s/\.\s\s+/\.\n/g;
+s/\; /\: /g;
+s/^\s*//g;
+#print FD $_ foreach @in;
+chomp(@in);
+print FD join(" ",@in);#$_ foreach @in;
+print FD $/;
+close(FD);
+#exec("festival -b /home/abez/scripts/festival.scm");
+# # this works for normal
+# system("ecasound -f:32,2,48000 -i resample,auto,$wavfile -o jack,system");
+# # this requires the dropmixer
+system("ecasound -f:32,1,48000 -i resample,auto,$wavfile -o jack,csoundDropMixer:input3");
+system("rm $wavfile");
+sub daemonize {
+    chdir '/'               or die "Can't chdir to /: $!";
+    open STDIN, '/dev/null' or die "Can't read /dev/null: $!";
+    open STDOUT, '>/dev/null'
+                            or die "Can't write to /dev/null: $!";
+    defined(my $pid = fork) or die "Can't fork: $!";
+    exit if $pid;
+    setsid                  or die "Can't start a new session: $!";
+    open STDERR, '>&STDOUT' or die "Can't dup stdout: $!";
+}
