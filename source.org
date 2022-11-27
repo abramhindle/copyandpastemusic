@@ -43,3 +43,8 @@
     https://archive.org/details/b30538105/page/122/mode/2up
   - Minutes of a witchcraft trial
     https://archive.org/details/acollectionrare00websgoog/page/n168/mode/2up
+
+* commands:
+  - /remap      change sound mapping
+  - /linear     deterministic sound mapping
+  - /forget     forget all the texts

@@ -53,7 +53,8 @@ class KNLM:
     def __init__(self,n=4):
         self.n = n
         self.model = KneserNeyInterpolated(n)
-
+    def forget(self):
+        self.model = KneserNeyInterpolated(self.n)
     def tokenize(self, text):
         return word_tokenize(text)
     def grams_of_tokens(self, tokens):
@@ -67,14 +68,13 @@ class KNLM:
         if model.vocab:
             model.vocab.update(vocab)
         model.fit(train_data, vocab)
-        print(f"total vocab: {len(model.vocab)}")
+        # print(f"total vocab: {len(model.vocab)}")
     def entropy(self, text):
         if len(self.model.vocab) == 0:
             return 1e100
         grams = self.grams_of_text(text)
         return self.model.entropy(grams)
         
-lm = KNLM()    
 
 class OscSetter:
     def __init__(self,host="127.0.0.1", port=57120 ):
@@ -183,7 +183,14 @@ def send_mappings(mappings, osc):
     mc = [elm for m in mc for elm in m]
     # print(f'mc:{mc}')
     osc.send( "/mappingchain", *mc)
-    
+
+commands = {
+    "/remap": lambda cm, osc, lm: cm.randomize_mapping(),
+    "/linear": lambda cm, osc, lm: cm.linear_mapping(),
+    "/forget": lambda cm, osc, lm: lm.forget(),
+}
+
+
 def main():
     args = parse_args()
     if args.test:
@@ -191,21 +198,28 @@ def main():
         return
     osc = OscSetter()
     cm = CharMapper()
+    lm = KNLM()
     cm.randomize_mapping()
     for text in pastes(primary=True):
-        print(text)
+
+        if text and text.strip() in commands:
+            command = text.strip()
+            print(f'Executing command {command}')
+            commands[command](cm,osc,lm)
+            continue
+        # print(text)
         espeakit(text)
         osc.send( "/text",  text )
         score = lm.entropy(text)
         osc.send( "/entropy", score)
-        # print(f'Score: {score}')
+        print(f'{score}: {text}')
         lm.add_text(text)
         c = Counter( text )
         alphabet = [c.get(i,0) for i in "abcdefghijklmnopqrstuvwxyz "]
         osc.send( "/alphabet", *alphabet )
         mappings = cm.get_mappings_of_text( text[-24:] )
         send_mappings(mappings, osc)
-        #print(mappings)
+        #print(mappings)        
 
 if __name__ == "__main__":
     main()
