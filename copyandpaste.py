@@ -184,10 +184,22 @@ def send_mappings(mappings, osc):
     # print(f'mc:{mc}')
     osc.send( "/mappingchain", *mc)
 
+do_cm = True
+
+def do_cm_enable():
+    global do_cm
+    do_cm = True
+
+def do_cm_disable():
+    global do_cm
+    do_cm = False
+
 commands = {
-    "/remap": lambda cm, osc, lm: cm.randomize_mapping(),
+    "/remap":  lambda cm, osc, lm: cm.randomize_mapping(),
     "/linear": lambda cm, osc, lm: cm.linear_mapping(),
     "/forget": lambda cm, osc, lm: lm.forget(),
+    "/docm":   lambda cm, osc, lm: do_cm_enable(),
+    "/nocm":   lambda cm, osc, lm: do_cm_disable(),
 }
 
 
@@ -217,8 +229,9 @@ def main():
         c = Counter( text )
         alphabet = [c.get(i,0) for i in "abcdefghijklmnopqrstuvwxyz "]
         osc.send( "/alphabet", *alphabet )
-        mappings = cm.get_mappings_of_text( text[-24:] )
-        send_mappings(mappings, osc)
+        if do_cm:
+            mappings = cm.get_mappings_of_text( text[-24:] )
+            send_mappings(mappings, osc)
         #print(mappings)        
 
 if __name__ == "__main__":

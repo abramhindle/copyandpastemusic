@@ -1,15 +1,18 @@
+* Start
+  - /forget
+  - /nocm
 * Copy and Paste by Abram Hindle / skruntskrunt
-  - This performance is based on the information in my computer's
-    clipboard.
-  - In this peformance I will be using copy and paste texts as
+  - This performance is based on the information in the artist's
+    computer's clipboard.
+  - In this peformance the artist will be using copy and paste texts as
     prompts to an instrument that interprets text.
-  - I am exploring text and its information theoretic relationship with 
-    sound, embeddings, and time.
+  - The artist is exploring text and its information theoretic
+    relationship with sound, embeddings, and time.
   - The instrument is multifacetted.
     - It contains a word based n-gram model that measures the surprise
       of new text. This surprise is audible. Suprise is correlated
       with cross-entropy.
-    - It contains a character based 3-gram model that prompts the
+    - It contains a character based tri-gram model that prompts the
       playing of grains of sound from 8 gigabytes of sounds. Each set
       of characters such as "aaa" or "dem" maps to a cluster of
       sounds from these 8gb of sounds. These sounds are represented by
@@ -17,9 +20,10 @@
       and then placed into a 3 dimensional space using the
       dimensionality reduction tool technique called u-map. The u-map
       results of the embedding are then clustered by dbscan.
-  - The source texts are not mine and I do not approve or agree with
-    their content.
-
+  - The source texts are not of the artist and the artist does not
+    approve or agree with their content.
+  - /forget
+  - /docm
 * Sources
   - Demonology https://ia902807.us.archive.org/6/items/demonologyanddev40686gut/40686-h/40686-h.htm
   - Mystic https://archive.org/stream/mysticthesaurus00whitgoog/mysticthesaurus00whitgoog_djvu.txt
@@ -48,3 +52,5 @@
   - /remap      change sound mapping
   - /linear     deterministic sound mapping
   - /forget     forget all the texts
+  - /docm       do char mapping
+  - /nocm       no char mapping
